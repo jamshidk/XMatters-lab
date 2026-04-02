@@ -1,87 +1,930 @@
-<!doctype html>
+<!DOCTYPE html>
 <html lang="en">
-  <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>FEA & Structure Design Lab</title>
-    <link rel="stylesheet" href="styles.css" />
-  </head>
-  <body>
-    <header class="hero">
-      <div class="container">
-        <h1>FEA & Structure Design Lab</h1>
-        <p>
-          Explore fast, first-pass structural checks with beam-style finite element
-          approximations and practical design summaries.
-        </p>
-      </div>
-    </header>
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>AeroStruct Consulting | Aerospace Engineering Solutions</title>
+  <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Exo+2:wght@300;400;600;700&family=Source+Sans+3:wght@300;400;600&display=swap" rel="stylesheet" />
+  <style>
+    :root {
+      --navy:    #080e1d;
+      --navy2:   #0d1528;
+      --charcoal:#111827;
+      --card:    #141e33;
+      --border:  rgba(100,160,220,0.18);
+      --accent:  #4a9ede;
+      --accent2: #7ec8f7;
+      --silver:  #a8bfd4;
+      --dim:     #6b82a0;
+      --white:   #e8f0f8;
+      --gold:    #c9a84c;
+    }
 
-    <main class="container grid">
-      <section class="card">
-        <h2>Quick Beam Deflection Estimator</h2>
-        <p class="muted">
-          Uses closed-form beam equations (great for early concept validation).
-        </p>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
-        <form id="beam-form" class="form-grid">
-          <label>
-            Beam Type
-            <select id="beamType" required>
-              <option value="cantilever-end">Cantilever (end point load)</option>
-              <option value="simply-center">Simply supported (center point load)</option>
-            </select>
-          </label>
+    html { scroll-behavior: smooth; }
 
-          <label>
-            Span Length L (m)
-            <input id="length" type="number" step="any" min="0.01" value="2" required />
-          </label>
+    body {
+      background: var(--navy);
+      color: var(--white);
+      font-family: 'Source Sans 3', sans-serif;
+      font-weight: 300;
+      line-height: 1.7;
+      overflow-x: hidden;
+    }
 
-          <label>
-            Load P (N)
-            <input id="load" type="number" step="any" min="0.01" value="1000" required />
-          </label>
+    /* ── SCROLLBAR ── */
+    ::-webkit-scrollbar { width: 6px; }
+    ::-webkit-scrollbar-track { background: var(--navy2); }
+    ::-webkit-scrollbar-thumb { background: var(--accent); border-radius: 3px; }
 
-          <label>
-            Elastic Modulus E (Pa)
-            <input id="modulus" type="number" step="any" min="1" value="200000000000" required />
-          </label>
+    /* ── NAV ── */
+    nav {
+      position: fixed; top: 0; width: 100%; z-index: 100;
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 0 6vw;
+      height: 68px;
+      background: rgba(8,14,29,0.88);
+      backdrop-filter: blur(14px);
+      border-bottom: 1px solid var(--border);
+      transition: background 0.3s;
+    }
+    .logo {
+      font-family: 'Orbitron', monospace;
+      font-size: 1.15rem;
+      font-weight: 700;
+      letter-spacing: 0.06em;
+      color: var(--white);
+      text-decoration: none;
+      display: flex; align-items: center; gap: 10px;
+    }
+    .logo-icon {
+      width: 32px; height: 32px;
+      background: linear-gradient(135deg, var(--accent), var(--accent2));
+      clip-path: polygon(50% 0%, 100% 38%, 82% 100%, 18% 100%, 0% 38%);
+      flex-shrink: 0;
+    }
+    .nav-links {
+      display: flex; gap: 2.2rem; list-style: none;
+    }
+    .nav-links a {
+      font-family: 'Exo 2', sans-serif;
+      font-size: 0.82rem;
+      font-weight: 600;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      text-decoration: none;
+      color: var(--silver);
+      transition: color 0.25s;
+    }
+    .nav-links a:hover { color: var(--accent2); }
+    .nav-cta {
+      font-family: 'Exo 2', sans-serif;
+      font-size: 0.8rem;
+      font-weight: 600;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      text-decoration: none;
+      color: var(--navy);
+      background: var(--accent);
+      padding: 0.5rem 1.4rem;
+      border-radius: 2px;
+      transition: background 0.25s, transform 0.2s;
+    }
+    .nav-cta:hover { background: var(--accent2); transform: translateY(-1px); }
 
-          <label>
-            Second Moment I (m⁴)
-            <input id="inertia" type="number" step="any" min="0.0000000001" value="0.000001" required />
-          </label>
+    /* hamburger */
+    .hamburger { display: none; flex-direction: column; gap: 5px; cursor: pointer; }
+    .hamburger span { width: 24px; height: 2px; background: var(--silver); border-radius: 2px; transition: 0.3s; }
+    .mobile-menu {
+      display: none; position: fixed; top: 68px; left: 0; width: 100%;
+      background: rgba(8,14,29,0.97); padding: 2rem 6vw;
+      flex-direction: column; gap: 1.4rem; z-index: 99;
+    }
+    .mobile-menu.open { display: flex; }
+    .mobile-menu a { font-family: 'Exo 2', sans-serif; font-size: 1.1rem; color: var(--silver); text-decoration: none; }
 
-          <button type="submit">Calculate</button>
-        </form>
+    /* ── HERO ── */
+    #hero {
+      position: relative; min-height: 100vh;
+      display: flex; align-items: center;
+      padding: 120px 6vw 80px;
+      overflow: hidden;
+    }
+    /* Blueprint grid background */
+    #hero::before {
+      content: '';
+      position: absolute; inset: 0;
+      background-image:
+        linear-gradient(rgba(74,158,222,0.07) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(74,158,222,0.07) 1px, transparent 1px);
+      background-size: 60px 60px;
+      animation: gridShift 20s linear infinite;
+    }
+    @keyframes gridShift { from { background-position: 0 0; } to { background-position: 60px 60px; } }
 
-        <div id="result" class="result" aria-live="polite"></div>
-      </section>
+    /* Radial glow */
+    #hero::after {
+      content: '';
+      position: absolute; top: 20%; left: 5%;
+      width: 600px; height: 600px; border-radius: 50%;
+      background: radial-gradient(circle, rgba(74,158,222,0.12) 0%, transparent 70%);
+      pointer-events: none;
+    }
 
-      <section class="card">
-        <h2>Structure Design Checklist</h2>
-        <ul class="checklist">
-          <li>Define serviceability and strength limit states.</li>
-          <li>Choose conservative load combinations for concept phase.</li>
-          <li>Validate member slenderness before detailed meshing.</li>
-          <li>Check support assumptions against realistic boundary conditions.</li>
-          <li>Refine with detailed FEA before final design release.</li>
-        </ul>
+    .hero-inner { position: relative; z-index: 2; max-width: 740px; }
+    .hero-eyebrow {
+      font-family: 'Exo 2', sans-serif;
+      font-size: 0.75rem; font-weight: 600;
+      letter-spacing: 0.25em; text-transform: uppercase;
+      color: var(--accent); margin-bottom: 1.2rem;
+      display: flex; align-items: center; gap: 0.8rem;
+    }
+    .hero-eyebrow::before {
+      content: ''; display: inline-block; width: 30px; height: 1px; background: var(--accent);
+    }
+    .hero-title {
+      font-family: 'Orbitron', monospace;
+      font-size: clamp(2.4rem, 5.5vw, 4.6rem);
+      font-weight: 900;
+      line-height: 1.08;
+      letter-spacing: -0.01em;
+      color: var(--white);
+      margin-bottom: 1.6rem;
+    }
+    .hero-title span { color: var(--accent); }
+    .hero-sub {
+      font-size: 1.1rem; color: var(--silver);
+      max-width: 520px; margin-bottom: 2.6rem;
+    }
+    .hero-actions { display: flex; gap: 1rem; flex-wrap: wrap; }
+    .btn-primary {
+      font-family: 'Exo 2', sans-serif; font-size: 0.85rem;
+      font-weight: 700; letter-spacing: 0.12em; text-transform: uppercase;
+      text-decoration: none; color: var(--navy);
+      background: var(--accent); padding: 0.9rem 2.4rem;
+      border: none; cursor: pointer;
+      clip-path: polygon(0 0, calc(100% - 10px) 0, 100% 10px, 100% 100%, 10px 100%, 0 calc(100% - 10px));
+      transition: background 0.25s, transform 0.2s;
+    }
+    .btn-primary:hover { background: var(--accent2); transform: translateY(-2px); }
+    .btn-outline {
+      font-family: 'Exo 2', sans-serif; font-size: 0.85rem;
+      font-weight: 700; letter-spacing: 0.12em; text-transform: uppercase;
+      text-decoration: none; color: var(--accent);
+      background: transparent; padding: 0.9rem 2.4rem;
+      border: 1px solid var(--accent); cursor: pointer;
+      transition: background 0.25s, color 0.25s;
+    }
+    .btn-outline:hover { background: rgba(74,158,222,0.1); }
 
-        <h3>Material Presets</h3>
-        <div class="materials">
-          <button data-e="200000000000">Steel (200 GPa)</button>
-          <button data-e="70000000000">Aluminum (70 GPa)</button>
-          <button data-e="30000000000">Concrete (30 GPa)</button>
+    /* Stats row */
+    .hero-stats {
+      position: absolute; bottom: 60px; right: 6vw;
+      display: flex; gap: 3rem;
+      z-index: 2;
+    }
+    .stat { text-align: right; }
+    .stat-num {
+      font-family: 'Orbitron', monospace;
+      font-size: 2.2rem; font-weight: 700;
+      color: var(--accent2); line-height: 1;
+    }
+    .stat-label {
+      font-size: 0.72rem; letter-spacing: 0.14em;
+      text-transform: uppercase; color: var(--dim);
+    }
+
+    /* ── SECTION SHARED ── */
+    section { padding: 100px 6vw; }
+    .section-label {
+      font-family: 'Exo 2', sans-serif;
+      font-size: 0.72rem; font-weight: 600;
+      letter-spacing: 0.28em; text-transform: uppercase;
+      color: var(--accent); margin-bottom: 0.8rem;
+      display: flex; align-items: center; gap: 0.8rem;
+    }
+    .section-label::before { content: '//'; opacity: 0.5; }
+    .section-title {
+      font-family: 'Orbitron', monospace;
+      font-size: clamp(1.6rem, 3.5vw, 2.6rem);
+      font-weight: 700; color: var(--white);
+      line-height: 1.2; margin-bottom: 1.2rem;
+    }
+    .section-sub {
+      font-size: 1rem; color: var(--silver);
+      max-width: 540px; margin-bottom: 3.5rem;
+    }
+
+    /* ── ABOUT ── */
+    #about { background: var(--navy2); }
+    .about-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 5vw; align-items: center;
+    }
+    .about-img {
+      position: relative;
+      aspect-ratio: 4/3;
+      background: var(--card);
+      border: 1px solid var(--border);
+      overflow: hidden;
+    }
+    /* Schematic illustration */
+    .about-img svg { width: 100%; height: 100%; }
+    .about-content { }
+    .about-tag {
+      display: inline-block;
+      font-family: 'Exo 2', sans-serif;
+      font-size: 0.72rem; font-weight: 600;
+      letter-spacing: 0.18em; text-transform: uppercase;
+      color: var(--accent2);
+      background: rgba(74,158,222,0.1);
+      border: 1px solid rgba(74,158,222,0.25);
+      padding: 0.3rem 0.8rem;
+      border-radius: 2px; margin-bottom: 1rem;
+    }
+    .about-text { font-size: 0.98rem; color: var(--silver); margin-bottom: 1rem; }
+    .about-list { list-style: none; margin-top: 1.8rem; display: flex; flex-direction: column; gap: 0.8rem; }
+    .about-list li {
+      display: flex; align-items: center; gap: 0.8rem;
+      font-size: 0.92rem; color: var(--silver);
+    }
+    .about-list li::before {
+      content: '▸'; color: var(--accent); font-size: 0.75rem; flex-shrink: 0;
+    }
+
+    /* ── SERVICES ── */
+    #services { background: var(--charcoal); }
+    .services-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+      gap: 1.5px;
+      border: 1.5px solid var(--border);
+    }
+    .service-card {
+      background: var(--card);
+      padding: 2.4rem 2rem;
+      border: none;
+      position: relative; overflow: hidden;
+      transition: background 0.3s;
+    }
+    .service-card:hover { background: #1a2540; }
+    .service-card::before {
+      content: '';
+      position: absolute; top: 0; left: 0; right: 0; height: 3px;
+      background: linear-gradient(90deg, var(--accent), var(--accent2));
+      transform: scaleX(0); transform-origin: left;
+      transition: transform 0.35s ease;
+    }
+    .service-card:hover::before { transform: scaleX(1); }
+    .service-icon {
+      width: 48px; height: 48px; margin-bottom: 1.4rem;
+      color: var(--accent);
+    }
+    .service-num {
+      position: absolute; bottom: 1.4rem; right: 1.8rem;
+      font-family: 'Orbitron', monospace;
+      font-size: 3rem; font-weight: 900;
+      color: rgba(74,158,222,0.07);
+      line-height: 1;
+    }
+    .service-title {
+      font-family: 'Exo 2', sans-serif;
+      font-size: 1.05rem; font-weight: 700;
+      color: var(--white); margin-bottom: 0.6rem;
+      letter-spacing: 0.03em;
+    }
+    .service-text { font-size: 0.9rem; color: var(--dim); line-height: 1.65; }
+
+    /* ── TESTIMONIALS ── */
+    #testimonials { background: var(--navy2); }
+    .testimonials-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+      gap: 1.5rem;
+    }
+    .testi-card {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 4px;
+      padding: 2.2rem 2rem;
+      position: relative;
+    }
+    .testi-quote {
+      font-family: 'Orbitron', monospace;
+      font-size: 3.5rem; line-height: 0.8;
+      color: var(--accent); opacity: 0.4;
+      margin-bottom: 0.8rem;
+    }
+    .testi-text { font-size: 0.95rem; color: var(--silver); font-style: italic; margin-bottom: 1.6rem; line-height: 1.7; }
+    .testi-author { display: flex; align-items: center; gap: 1rem; }
+    .testi-avatar {
+      width: 44px; height: 44px; border-radius: 50%;
+      background: linear-gradient(135deg, var(--accent), #1e3a5f);
+      display: flex; align-items: center; justify-content: center;
+      font-family: 'Orbitron', monospace; font-size: 0.85rem;
+      font-weight: 700; color: var(--white); flex-shrink: 0;
+    }
+    .testi-name { font-family: 'Exo 2', sans-serif; font-size: 0.9rem; font-weight: 700; color: var(--white); }
+    .testi-role { font-size: 0.78rem; color: var(--dim); letter-spacing: 0.05em; }
+    .testi-stars { color: var(--gold); font-size: 0.85rem; letter-spacing: 0.05em; margin-bottom: 0.8rem; }
+
+    /* ── FAQ ── */
+    #faq { background: var(--charcoal); }
+    .faq-list { max-width: 780px; display: flex; flex-direction: column; gap: 0; }
+    .faq-item {
+      border-bottom: 1px solid var(--border);
+    }
+    .faq-question {
+      width: 100%; background: none; border: none; cursor: pointer;
+      display: flex; justify-content: space-between; align-items: center;
+      padding: 1.4rem 0;
+      font-family: 'Exo 2', sans-serif;
+      font-size: 1rem; font-weight: 600;
+      color: var(--white); text-align: left;
+      transition: color 0.2s;
+    }
+    .faq-question:hover { color: var(--accent2); }
+    .faq-icon {
+      width: 24px; height: 24px; flex-shrink: 0;
+      border: 1px solid var(--border); border-radius: 50%;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 1rem; color: var(--accent);
+      transition: transform 0.3s, background 0.3s;
+    }
+    .faq-item.open .faq-icon { transform: rotate(45deg); background: rgba(74,158,222,0.15); }
+    .faq-answer {
+      max-height: 0; overflow: hidden;
+      transition: max-height 0.4s ease, padding 0.3s;
+    }
+    .faq-item.open .faq-answer { max-height: 300px; padding-bottom: 1.2rem; }
+    .faq-answer p { font-size: 0.93rem; color: var(--dim); line-height: 1.75; }
+
+    /* ── CONTACT ── */
+    #contact { background: var(--navy2); }
+    .contact-grid {
+      display: grid;
+      grid-template-columns: 1fr 1.3fr;
+      gap: 6vw; align-items: start;
+    }
+    .contact-info { }
+    .contact-detail {
+      display: flex; gap: 1rem; align-items: flex-start;
+      margin-bottom: 1.8rem;
+    }
+    .contact-detail-icon {
+      width: 40px; height: 40px; flex-shrink: 0;
+      background: rgba(74,158,222,0.1);
+      border: 1px solid var(--border);
+      display: flex; align-items: center; justify-content: center;
+      color: var(--accent);
+    }
+    .contact-detail-title { font-family: 'Exo 2', sans-serif; font-size: 0.78rem; font-weight: 600; letter-spacing: 0.14em; text-transform: uppercase; color: var(--dim); margin-bottom: 0.2rem; }
+    .contact-detail-val { font-size: 0.95rem; color: var(--silver); }
+
+    .contact-form { display: flex; flex-direction: column; gap: 1.2rem; }
+    .form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 1.2rem; }
+    .form-group { display: flex; flex-direction: column; gap: 0.4rem; }
+    .form-group label {
+      font-family: 'Exo 2', sans-serif;
+      font-size: 0.73rem; font-weight: 600;
+      letter-spacing: 0.14em; text-transform: uppercase; color: var(--dim);
+    }
+    .form-group input,
+    .form-group select,
+    .form-group textarea {
+      background: var(--card); border: 1px solid var(--border);
+      color: var(--white); padding: 0.75rem 1rem;
+      font-family: 'Source Sans 3', sans-serif; font-size: 0.93rem;
+      border-radius: 2px; transition: border-color 0.25s;
+      width: 100%; resize: none;
+    }
+    .form-group input:focus,
+    .form-group select:focus,
+    .form-group textarea:focus {
+      outline: none; border-color: var(--accent);
+    }
+    .form-group select option { background: var(--card); }
+    .form-success {
+      display: none; padding: 1rem 1.4rem;
+      background: rgba(74,158,222,0.1);
+      border: 1px solid var(--accent);
+      border-radius: 2px;
+      font-family: 'Exo 2', sans-serif;
+      font-size: 0.9rem; color: var(--accent2);
+    }
+
+    /* ── FOOTER ── */
+    footer {
+      background: var(--navy);
+      border-top: 1px solid var(--border);
+      padding: 3rem 6vw;
+      display: flex; justify-content: space-between; align-items: center;
+      flex-wrap: wrap; gap: 1.5rem;
+    }
+    .footer-logo {
+      font-family: 'Orbitron', monospace;
+      font-size: 0.95rem; font-weight: 700;
+      color: var(--dim); text-decoration: none;
+    }
+    .footer-copy { font-size: 0.8rem; color: var(--dim); }
+    .footer-links { display: flex; gap: 1.6rem; }
+    .footer-links a { font-size: 0.82rem; color: var(--dim); text-decoration: none; transition: color 0.2s; }
+    .footer-links a:hover { color: var(--accent); }
+
+    /* ── SCROLL REVEAL ── */
+    .reveal { opacity: 0; transform: translateY(28px); transition: opacity 0.65s ease, transform 0.65s ease; }
+    .reveal.visible { opacity: 1; transform: none; }
+
+    /* ── RESPONSIVE ── */
+    @media (max-width: 900px) {
+      .nav-links, .nav-cta { display: none; }
+      .hamburger { display: flex; }
+      .about-grid, .contact-grid { grid-template-columns: 1fr; }
+      .hero-stats { position: static; margin-top: 3rem; justify-content: flex-start; }
+      .form-row { grid-template-columns: 1fr; }
+      #hero { padding-bottom: 60px; }
+    }
+    @media (max-width: 480px) {
+      .hero-title { font-size: 2rem; }
+    }
+  </style>
+</head>
+<body>
+
+<!-- NAV -->
+<nav>
+  <a href="#hero" class="logo">
+    <div class="logo-icon"></div>
+    AeroStruct
+  </a>
+  <ul class="nav-links">
+    <li><a href="#about">About</a></li>
+    <li><a href="#services">Services</a></li>
+    <li><a href="#testimonials">Clients</a></li>
+    <li><a href="#faq">FAQ</a></li>
+    <li><a href="#contact">Contact</a></li>
+  </ul>
+  <a href="#contact" class="nav-cta">Get a Quote</a>
+  <div class="hamburger" id="hamburger" aria-label="Menu">
+    <span></span><span></span><span></span>
+  </div>
+</nav>
+<div class="mobile-menu" id="mobileMenu">
+  <a href="#about" onclick="closeMobile()">About</a>
+  <a href="#services" onclick="closeMobile()">Services</a>
+  <a href="#testimonials" onclick="closeMobile()">Clients</a>
+  <a href="#faq" onclick="closeMobile()">FAQ</a>
+  <a href="#contact" onclick="closeMobile()">Contact</a>
+</div>
+
+<!-- HERO -->
+<section id="hero">
+  <div class="hero-inner">
+    <div class="hero-eyebrow">Aerospace Engineering Consulting</div>
+    <h1 class="hero-title">
+      Precision<br/>Engineering<br/>for <span>Aerospace</span><br/>Excellence
+    </h1>
+    <p class="hero-sub">
+      Expert consulting in aerospace component manufacturing, structural analysis, and material integrity — delivering solutions that meet the highest industry standards.
+    </p>
+    <div class="hero-actions">
+      <a href="#contact" class="btn-primary">Request a Consultation</a>
+      <a href="#services" class="btn-outline">Our Services</a>
+    </div>
+  </div>
+
+  <div class="hero-stats">
+    <div class="stat">
+      <div class="stat-num">20+</div>
+      <div class="stat-label">Years Experience</div>
+    </div>
+    <div class="stat">
+      <div class="stat-num">150+</div>
+      <div class="stat-label">Projects Delivered</div>
+    </div>
+    <div class="stat">
+      <div class="stat-num">98%</div>
+      <div class="stat-label">Client Satisfaction</div>
+    </div>
+  </div>
+</section>
+
+<!-- ABOUT -->
+<section id="about">
+  <div class="about-grid reveal">
+    <!-- Schematic SVG illustration -->
+    <div class="about-img">
+      <svg viewBox="0 0 480 360" xmlns="http://www.w3.org/2000/svg">
+        <rect width="480" height="360" fill="#0d1528"/>
+        <!-- Grid lines -->
+        <g stroke="rgba(74,158,222,0.12)" stroke-width="1">
+          <line x1="0" y1="60"  x2="480" y2="60"/>
+          <line x1="0" y1="120" x2="480" y2="120"/>
+          <line x1="0" y1="180" x2="480" y2="180"/>
+          <line x1="0" y1="240" x2="480" y2="240"/>
+          <line x1="0" y1="300" x2="480" y2="300"/>
+          <line x1="80"  y1="0" x2="80"  y2="360"/>
+          <line x1="160" y1="0" x2="160" y2="360"/>
+          <line x1="240" y1="0" x2="240" y2="360"/>
+          <line x1="320" y1="0" x2="320" y2="360"/>
+          <line x1="400" y1="0" x2="400" y2="360"/>
+        </g>
+        <!-- Airfoil cross-section -->
+        <path d="M 50 180 Q 140 120 280 150 Q 380 168 440 180 Q 380 192 280 210 Q 140 240 50 180 Z"
+              fill="none" stroke="#4a9ede" stroke-width="2.5"/>
+        <!-- Chord line -->
+        <line x1="50" y1="180" x2="440" y2="180" stroke="rgba(74,158,222,0.4)" stroke-width="1" stroke-dasharray="6,4"/>
+        <!-- Dimension arrows -->
+        <line x1="50" y1="250" x2="440" y2="250" stroke="rgba(74,158,222,0.5)" stroke-width="1"/>
+        <line x1="50"  y1="244" x2="50"  y2="256" stroke="rgba(74,158,222,0.5)" stroke-width="1"/>
+        <line x1="440" y1="244" x2="440" y2="256" stroke="rgba(74,158,222,0.5)" stroke-width="1"/>
+        <text x="245" y="268" fill="rgba(74,158,222,0.7)" font-size="10" text-anchor="middle" font-family="monospace">CHORD = 390 mm</text>
+        <!-- Thickness marker -->
+        <line x1="200" y1="123" x2="200" y2="237" stroke="rgba(126,200,247,0.5)" stroke-width="1" stroke-dasharray="3,3"/>
+        <text x="208" y="182" fill="rgba(126,200,247,0.7)" font-size="9" font-family="monospace">t/c</text>
+        <!-- Nodes / stress points -->
+        <circle cx="50"  cy="180" r="4" fill="none" stroke="#4a9ede" stroke-width="1.5"/>
+        <circle cx="160" cy="136" r="3" fill="#4a9ede" opacity="0.8"/>
+        <circle cx="260" cy="149" r="3" fill="#4a9ede" opacity="0.8"/>
+        <circle cx="360" cy="162" r="3" fill="#4a9ede" opacity="0.8"/>
+        <circle cx="440" cy="180" r="4" fill="none" stroke="#4a9ede" stroke-width="1.5"/>
+        <!-- Label -->
+        <text x="24" y="20" fill="rgba(74,158,222,0.5)" font-size="9" font-family="monospace">NACA 2412 — STRUCTURAL ANALYSIS</text>
+        <text x="24" y="34" fill="rgba(74,158,222,0.3)" font-size="8" font-family="monospace">REV 04 | AeroStruct Consulting</text>
+      </svg>
+    </div>
+
+    <div class="about-content">
+      <span class="about-tag">Who We Are</span>
+      <div class="section-label">About AeroStruct</div>
+      <h2 class="section-title">Engineering Confidence from Blueprint to Certification</h2>
+      <p class="about-text">
+        AeroStruct Consulting brings decades of hands-on expertise in aerospace manufacturing processes and structural integrity assessment. We partner with OEMs, Tier-1 suppliers, and MRO operators to ensure every component performs flawlessly under the most demanding conditions.
+      </p>
+      <p class="about-text">
+        Our team of certified engineers combines advanced simulation tools with deep materials knowledge to deliver analysis and consulting that is both rigorous and actionable.
+      </p>
+      <ul class="about-list">
+        <li>FAA/EASA regulatory compliance consulting</li>
+        <li>FEA & fatigue life analysis for primary structures</li>
+        <li>Manufacturing process optimization & DFM review</li>
+        <li>Composites, titanium, and high-strength alloy expertise</li>
+        <li>Full lifecycle support from prototype to production</li>
+      </ul>
+    </div>
+  </div>
+</section>
+
+<!-- SERVICES -->
+<section id="services">
+  <div class="reveal">
+    <div class="section-label">What We Do</div>
+    <h2 class="section-title">Core Engineering Services</h2>
+    <p class="section-sub">From first-principles analysis to full manufacturing support, we cover the complete technical lifecycle of aerospace components.</p>
+  </div>
+
+  <div class="services-grid reveal">
+    <div class="service-card">
+      <svg class="service-icon" viewBox="0 0 48 48" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <rect x="6" y="32" width="36" height="4" rx="1" stroke="currentColor" stroke-width="1.8"/>
+        <path d="M12 32 L24 10 L36 32" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/>
+        <line x1="18" y1="32" x2="18" y2="22" stroke="currentColor" stroke-width="1.5" stroke-dasharray="3,2"/>
+        <line x1="30" y1="32" x2="30" y2="22" stroke="currentColor" stroke-width="1.5" stroke-dasharray="3,2"/>
+        <circle cx="24" cy="10" r="2.5" fill="currentColor" opacity="0.7"/>
+      </svg>
+      <div class="service-title">Structural Analysis & FEA</div>
+      <p class="service-text">Static, dynamic, and fatigue analysis of airframe and propulsion components using industry-validated FEA methodologies and software.</p>
+      <div class="service-num">01</div>
+    </div>
+
+    <div class="service-card">
+      <svg class="service-icon" viewBox="0 0 48 48" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <rect x="8" y="8" width="32" height="32" rx="2" stroke="currentColor" stroke-width="1.8"/>
+        <line x1="8" y1="20" x2="40" y2="20" stroke="currentColor" stroke-width="1.3" stroke-dasharray="3,2"/>
+        <line x1="8" y1="28" x2="40" y2="28" stroke="currentColor" stroke-width="1.3" stroke-dasharray="3,2"/>
+        <line x1="20" y1="8" x2="20" y2="40" stroke="currentColor" stroke-width="1.3" stroke-dasharray="3,2"/>
+        <line x1="28" y1="8" x2="28" y2="40" stroke="currentColor" stroke-width="1.3" stroke-dasharray="3,2"/>
+        <circle cx="24" cy="24" r="4" stroke="currentColor" stroke-width="1.8"/>
+      </svg>
+      <div class="service-title">Manufacturing Process Consulting</div>
+      <p class="service-text">DFM reviews, process capability studies, tooling design guidance, and production readiness assessments for aerospace-grade component fabrication.</p>
+      <div class="service-num">02</div>
+    </div>
+
+    <div class="service-card">
+      <svg class="service-icon" viewBox="0 0 48 48" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <path d="M8 36 Q16 20 24 24 Q32 28 40 12" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/>
+        <line x1="8" y1="36" x2="8" y2="12" stroke="currentColor" stroke-width="1.4"/>
+        <line x1="8" y1="36" x2="40" y2="36" stroke="currentColor" stroke-width="1.4"/>
+        <circle cx="24" cy="24" r="2.5" fill="currentColor" opacity="0.8"/>
+        <circle cx="16" cy="28" r="2" fill="currentColor" opacity="0.6"/>
+        <circle cx="32" cy="20" r="2" fill="currentColor" opacity="0.6"/>
+      </svg>
+      <div class="service-title">Fatigue & Damage Tolerance</div>
+      <p class="service-text">Crack growth analysis, safe-life and damage-tolerance assessments per FAA AC 25.571, ensuring airworthiness throughout the component lifecycle.</p>
+      <div class="service-num">03</div>
+    </div>
+
+    <div class="service-card">
+      <svg class="service-icon" viewBox="0 0 48 48" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <path d="M10 38 L10 20 L24 10 L38 20 L38 38 Z" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/>
+        <rect x="18" y="28" width="12" height="10" stroke="currentColor" stroke-width="1.5"/>
+        <line x1="10" y1="20" x2="38" y2="20" stroke="currentColor" stroke-width="1.3" stroke-dasharray="4,2"/>
+        <circle cx="24" cy="18" r="2" fill="currentColor" opacity="0.7"/>
+      </svg>
+      <div class="service-title">Composites Engineering</div>
+      <p class="service-text">Layup design, coupon testing review, delamination analysis, and repair scheme development for CFRP, GFRP, and hybrid composite structures.</p>
+      <div class="service-num">04</div>
+    </div>
+
+    <div class="service-card">
+      <svg class="service-icon" viewBox="0 0 48 48" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <circle cx="24" cy="24" r="14" stroke="currentColor" stroke-width="1.8"/>
+        <circle cx="24" cy="24" r="6" stroke="currentColor" stroke-width="1.5" stroke-dasharray="4,2"/>
+        <line x1="24" y1="10" x2="24" y2="6" stroke="currentColor" stroke-width="1.5"/>
+        <line x1="24" y1="42" x2="24" y2="38" stroke="currentColor" stroke-width="1.5"/>
+        <line x1="10" y1="24" x2="6"  y2="24" stroke="currentColor" stroke-width="1.5"/>
+        <line x1="42" y1="24" x2="38" y2="24" stroke="currentColor" stroke-width="1.5"/>
+      </svg>
+      <div class="service-title">Regulatory & Certification Support</div>
+      <p class="service-text">Compliance documentation, DER coordination, and certification planning support for FAA, EASA, and international airworthiness authorities.</p>
+      <div class="service-num">05</div>
+    </div>
+
+    <div class="service-card">
+      <svg class="service-icon" viewBox="0 0 48 48" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <rect x="8" y="14" width="32" height="22" rx="2" stroke="currentColor" stroke-width="1.8"/>
+        <line x1="16" y1="14" x2="16" y2="36" stroke="currentColor" stroke-width="1.3" stroke-dasharray="3,3"/>
+        <line x1="32" y1="14" x2="32" y2="36" stroke="currentColor" stroke-width="1.3" stroke-dasharray="3,3"/>
+        <line x1="8"  y1="25" x2="40" y2="25" stroke="currentColor" stroke-width="1.3" stroke-dasharray="3,3"/>
+        <circle cx="24" cy="8" r="3" stroke="currentColor" stroke-width="1.5"/>
+        <line x1="24" y1="11" x2="24" y2="14" stroke="currentColor" stroke-width="1.3"/>
+      </svg>
+      <div class="service-title">Material Selection & Testing</div>
+      <p class="service-text">Material characterization, supplier qualification, coupon and coupon-level test witnessing, and material allowables generation for aerospace applications.</p>
+      <div class="service-num">06</div>
+    </div>
+  </div>
+</section>
+
+<!-- TESTIMONIALS -->
+<section id="testimonials">
+  <div class="reveal">
+    <div class="section-label">Client Feedback</div>
+    <h2 class="section-title">Trusted by Industry Leaders</h2>
+    <p class="section-sub">Our clients include Tier-1 aerospace suppliers, defense contractors, and commercial aircraft manufacturers.</p>
+  </div>
+
+  <div class="testimonials-grid reveal">
+    <div class="testi-card">
+      <div class="testi-stars">★★★★★</div>
+      <div class="testi-quote">"</div>
+      <p class="testi-text">AeroStruct's structural analysis caught a critical fatigue hotspot we had missed internally. Their turnaround was fast and the report was certification-ready. Exceptional technical depth.</p>
+      <div class="testi-author">
+        <div class="testi-avatar">RH</div>
+        <div>
+          <div class="testi-name">Robert Hughes</div>
+          <div class="testi-role">Chief Engineer, Tier-1 Airframe Supplier</div>
         </div>
-      </section>
-    </main>
+      </div>
+    </div>
 
-    <footer class="container footer">
-      <small>Built for concept-level FEA and structure design exploration.</small>
-    </footer>
+    <div class="testi-card">
+      <div class="testi-stars">★★★★★</div>
+      <div class="testi-quote">"</div>
+      <p class="testi-text">We brought AeroStruct in to help us with FAA certification for a new nacelle component. Their DER relationships and regulatory knowledge saved us months of back-and-forth. Highly recommend.</p>
+      <div class="testi-author">
+        <div class="testi-avatar">ML</div>
+        <div>
+          <div class="testi-name">Maria Larson</div>
+          <div class="testi-role">VP Engineering, Propulsion Systems Co.</div>
+        </div>
+      </div>
+    </div>
 
-    <script src="app.js"></script>
-  </body>
+    <div class="testi-card">
+      <div class="testi-stars">★★★★★</div>
+      <div class="testi-quote">"</div>
+      <p class="testi-text">Their DFM review of our composite bracket production line identified 3 process inefficiencies that reduced our scrap rate by 40%. Practical, real-world insights from a world-class team.</p>
+      <div class="testi-author">
+        <div class="testi-avatar">JP</div>
+        <div>
+          <div class="testi-name">James Park</div>
+          <div class="testi-role">Director of Manufacturing, Aerostructures Inc.</div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- FAQ -->
+<section id="faq">
+  <div class="reveal">
+    <div class="section-label">Common Questions</div>
+    <h2 class="section-title">Frequently Asked Questions</h2>
+    <p class="section-sub">Everything you need to know before starting your project with us.</p>
+  </div>
+
+  <div class="faq-list reveal" id="faqList">
+    <div class="faq-item">
+      <button class="faq-question">
+        What types of aerospace components do you analyze?
+        <span class="faq-icon">+</span>
+      </button>
+      <div class="faq-answer">
+        <p>We analyze a wide range of primary and secondary structures including airframe panels, wing spars, fuselage frames, nacelles, control surfaces, landing gear components, engine mounts, and interior structural elements. We work across commercial, business aviation, defense, and space applications.</p>
+      </div>
+    </div>
+
+    <div class="faq-item">
+      <button class="faq-question">
+        Which analysis software and standards do you use?
+        <span class="faq-icon">+</span>
+      </button>
+      <div class="faq-answer">
+        <p>Our team works with industry-standard tools including NASTRAN, ABAQUS, ANSYS, and HyperMesh. We operate under FAA Advisory Circulars, MIL-HDBK-5/MMPDS, CMH-17 for composites, and relevant ASTM and SAE standards to ensure full regulatory alignment.</p>
+      </div>
+    </div>
+
+    <div class="faq-item">
+      <button class="faq-question">
+        How long does a typical structural analysis engagement take?
+        <span class="faq-icon">+</span>
+      </button>
+      <div class="faq-answer">
+        <p>Timelines vary by complexity. A focused component FEA review may take 2–4 weeks, while a full damage tolerance assessment with test correlation can take 8–16 weeks. We provide a detailed schedule and milestones during the proposal phase so you always know what to expect.</p>
+      </div>
+    </div>
+
+    <div class="faq-item">
+      <button class="faq-question">
+        Can you support our FAA/EASA certification effort directly?
+        <span class="faq-icon">+</span>
+      </button>
+      <div class="faq-answer">
+        <p>Yes. We have established relationships with FAA Designated Engineering Representatives (DERs) and can help prepare, review, and coordinate the engineering substantiation packages required for airworthiness approvals under Part 21, Part 25, Part 23, and other applicable regulations.</p>
+      </div>
+    </div>
+
+    <div class="faq-item">
+      <button class="faq-question">
+        Do you offer on-site consulting or remote services only?
+        <span class="faq-icon">+</span>
+      </button>
+      <div class="faq-answer">
+        <p>We offer both. While much of our analysis work can be delivered remotely, we are available for on-site factory visits, design reviews, test witnessing, and team embedment for larger programs. Travel scope is agreed upon during contract negotiation.</p>
+      </div>
+    </div>
+
+    <div class="faq-item">
+      <button class="faq-question">
+        How do I get a quote for my project?
+        <span class="faq-icon">+</span>
+      </button>
+      <div class="faq-answer">
+        <p>Use the contact form below or email us directly. Please include a brief description of the component, the analysis or consulting scope, any relevant drawings or specs (under NDA if needed), and your target delivery date. We typically respond within 1–2 business days with a scoping questionnaire or preliminary proposal.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- CONTACT -->
+<section id="contact">
+  <div class="contact-grid reveal">
+    <div class="contact-info">
+      <div class="section-label">Let's Work Together</div>
+      <h2 class="section-title">Start Your Engineering Consultation</h2>
+      <p class="section-sub" style="margin-bottom: 2.5rem;">Tell us about your project and we'll respond within one business day with a tailored approach.</p>
+
+      <div class="contact-detail">
+        <div class="contact-detail-icon">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"></path>
+            <polyline points="22,6 12,13 2,6"></polyline>
+          </svg>
+        </div>
+        <div>
+          <div class="contact-detail-title">Email</div>
+          <div class="contact-detail-val">info@aerostruct.com</div>
+        </div>
+      </div>
+
+      <div class="contact-detail">
+        <div class="contact-detail-icon">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07A19.5 19.5 0 0 1 4.69 13a19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 3.77 2h3a2 2 0 0 1 2 1.72c.127.96.361 1.903.7 2.81a2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l.91-.91a2 2 0 0 1 2.11-.45c.907.339 1.85.573 2.81.7A2 2 0 0 1 22 16.92z"></path>
+          </svg>
+        </div>
+        <div>
+          <div class="contact-detail-title">Phone</div>
+          <div class="contact-detail-val">+1 (800) 000-0000</div>
+        </div>
+      </div>
+
+      <div class="contact-detail">
+        <div class="contact-detail-icon">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"></path>
+            <circle cx="12" cy="10" r="3"></circle>
+          </svg>
+        </div>
+        <div>
+          <div class="contact-detail-title">Location</div>
+          <div class="contact-detail-val">Los Angeles, CA — serving clients nationwide & internationally</div>
+        </div>
+      </div>
+    </div>
+
+    <div>
+      <div id="formSuccess" class="form-success">
+        ✓ Message received. We'll be in touch within one business day.
+      </div>
+      <div class="contact-form" id="contactForm">
+        <div class="form-row">
+          <div class="form-group">
+            <label for="fname">First Name</label>
+            <input type="text" id="fname" placeholder="Jane" />
+          </div>
+          <div class="form-group">
+            <label for="lname">Last Name</label>
+            <input type="text" id="lname" placeholder="Smith" />
+          </div>
+        </div>
+        <div class="form-group">
+          <label for="email">Email Address</label>
+          <input type="email" id="email" placeholder="jane@company.com" />
+        </div>
+        <div class="form-group">
+          <label for="company">Company / Organization</label>
+          <input type="text" id="company" placeholder="Acme Aerospace LLC" />
+        </div>
+        <div class="form-group">
+          <label for="service">Service of Interest</label>
+          <select id="service">
+            <option value="">Select a service…</option>
+            <option>Structural Analysis & FEA</option>
+            <option>Manufacturing Process Consulting</option>
+            <option>Fatigue & Damage Tolerance</option>
+            <option>Composites Engineering</option>
+            <option>Regulatory & Certification Support</option>
+            <option>Material Selection & Testing</option>
+            <option>Other / Multiple Services</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label for="message">Project Description</label>
+          <textarea id="message" rows="5" placeholder="Describe your component, analysis scope, timeline, and any relevant background…"></textarea>
+        </div>
+        <button class="btn-primary" onclick="submitForm()" type="button">Send Message →</button>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- FOOTER -->
+<footer>
+  <a href="#hero" class="footer-logo">AeroStruct Consulting</a>
+  <p class="footer-copy">© 2025 AeroStruct Consulting. All rights reserved.</p>
+  <div class="footer-links">
+    <a href="#about">About</a>
+    <a href="#services">Services</a>
+    <a href="#contact">Contact</a>
+  </div>
+</footer>
+
+<script>
+  // Mobile menu
+  const hamburger = document.getElementById('hamburger');
+  const mobileMenu = document.getElementById('mobileMenu');
+  hamburger.addEventListener('click', () => mobileMenu.classList.toggle('open'));
+  function closeMobile() { mobileMenu.classList.remove('open'); }
+
+  // Scroll reveal
+  const reveals = document.querySelectorAll('.reveal');
+  const observer = new IntersectionObserver((entries) => {
+    entries.forEach(e => { if (e.isIntersecting) { e.target.classList.add('visible'); } });
+  }, { threshold: 0.1 });
+  reveals.forEach(el => observer.observe(el));
+
+  // FAQ accordion
+  document.querySelectorAll('.faq-question').forEach(btn => {
+    btn.addEventListener('click', () => {
+      const item = btn.parentElement;
+      const isOpen = item.classList.contains('open');
+      document.querySelectorAll('.faq-item').forEach(i => i.classList.remove('open'));
+      if (!isOpen) item.classList.add('open');
+    });
+  });
+
+  // Contact form demo
+  function submitForm() {
+    const email = document.getElementById('email').value;
+    if (!email) { alert('Please enter your email address.'); return; }
+    document.getElementById('contactForm').style.display = 'none';
+    document.getElementById('formSuccess').style.display = 'block';
+  }
+</script>
+</body>
 </html>
