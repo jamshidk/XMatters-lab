@@ -1,0 +1,87 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>FEA & Structure Design Lab</title>
+    <link rel="stylesheet" href="styles.css" />
+  </head>
+  <body>
+    <header class="hero">
+      <div class="container">
+        <h1>FEA & Structure Design Lab</h1>
+        <p>
+          Explore fast, first-pass structural checks with beam-style finite element
+          approximations and practical design summaries.
+        </p>
+      </div>
+    </header>
+
+    <main class="container grid">
+      <section class="card">
+        <h2>Quick Beam Deflection Estimator</h2>
+        <p class="muted">
+          Uses closed-form beam equations (great for early concept validation).
+        </p>
+
+        <form id="beam-form" class="form-grid">
+          <label>
+            Beam Type
+            <select id="beamType" required>
+              <option value="cantilever-end">Cantilever (end point load)</option>
+              <option value="simply-center">Simply supported (center point load)</option>
+            </select>
+          </label>
+
+          <label>
+            Span Length L (m)
+            <input id="length" type="number" step="any" min="0.01" value="2" required />
+          </label>
+
+          <label>
+            Load P (N)
+            <input id="load" type="number" step="any" min="0.01" value="1000" required />
+          </label>
+
+          <label>
+            Elastic Modulus E (Pa)
+            <input id="modulus" type="number" step="any" min="1" value="200000000000" required />
+          </label>
+
+          <label>
+            Second Moment I (m⁴)
+            <input id="inertia" type="number" step="any" min="0.0000000001" value="0.000001" required />
+          </label>
+
+          <button type="submit">Calculate</button>
+        </form>
+
+        <div id="result" class="result" aria-live="polite"></div>
+      </section>
+
+      <section class="card">
+        <h2>Structure Design Checklist</h2>
+        <ul class="checklist">
+          <li>Define serviceability and strength limit states.</li>
+          <li>Choose conservative load combinations for concept phase.</li>
+          <li>Validate member slenderness before detailed meshing.</li>
+          <li>Check support assumptions against realistic boundary conditions.</li>
+          <li>Refine with detailed FEA before final design release.</li>
+        </ul>
+
+        <h3>Material Presets</h3>
+        <div class="materials">
+          <button data-e="200000000000">Steel (200 GPa)</button>
+          <button data-e="70000000000">Aluminum (70 GPa)</button>
+          <button data-e="30000000000">Concrete (30 GPa)</button>
+        </div>
+      </section>
+    </main>
+
+    <footer class="container footer">
+      <small>Built for concept-level FEA and structure design exploration.</small>
+    </footer>
+
+    <script src="app.js"></script>
+  </body>
+</html>
